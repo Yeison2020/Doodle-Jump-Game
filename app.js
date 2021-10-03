@@ -2,13 +2,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const grid = document.querySelector(".grid");
   const doodler = document.createElement("div");
   let doodlerLeftSpace = 50;
-  doodleBottomSpace = 250;
+  let startPoint = 150;
+  doodleBottomSpace = startPoint;
   platFormCount = 5;
   let isGameOver = false;
   let platForms = [];
   let upTimerId;
   let downTimerId;
-
+  let isJumping = true;
+  isGoingLeft = false;
+  isGoingRight = false;
+  let leftTimerId;
   function createDoodle() {
     grid.append(doodler);
     doodler.classList.add("doodler");
@@ -52,10 +56,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function jump() {
     clearInterval(upTimerId);
+    isJumping = true;
     upTimerId = setInterval(function () {
       doodleBottomSpace += 20;
       doodler.style.bottom = doodleBottomSpace + "px";
-      if (doodleBottomSpace > 350) {
+      if (doodleBottomSpace > startPoint + 200) {
         fall();
       }
     }, 30);
@@ -63,11 +68,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function fall() {
     clearInterval(upTimerId);
+    isJumping = false;
     downTimerId = setInterval(function () {
       doodleBottomSpace -= 5;
       doodler.style.bottom = doodleBottomSpace + "px";
       if (doodleBottomSpace <= 0) {
         gameOver();
+        platForms.forEach((platform) => {
+          if (
+            doodleBottomSpace >= platform.bottom &&
+            doodleBottomSpace <= platform.bottom + 15 &&
+            doodlerLeftSpace + 60 >= platform.left &&
+            doodlerLeftSpace <= platform.left + 85 &&
+            !isJumping
+          ) {
+            console.log("Landed");
+            startPoint = doodleBottomSpace;
+            console.log(startPoint);
+            console.log(doodleBottomSpace);
+            jump();
+          }
+        });
       }
     }, 30);
   }
@@ -77,6 +98,25 @@ document.addEventListener("DOMContentLoaded", () => {
     isGameOver = true;
     clearInterval(upTimerId);
     clearInterval(downTimerId);
+  }
+
+  function control() {
+    if (e.key == "ArrowLeft") {
+      // Move Left
+      moveLeft();
+    } else if ((e.key = "ArrowRight")) {
+      //Move Right
+    } else if (e.key === "ArrowUp") {
+      // moveStraight()
+    }
+  }
+
+  function moveLeft() {
+    isGoingLeft = true;
+    leftTimerId = setInterval(function () {
+      doodlerLeftSpace -= 5;
+      doodler.style.left = doodlerLeftSpace + "px";
+    }, 30);
   }
   function start() {
     if (!isGameOver) {
