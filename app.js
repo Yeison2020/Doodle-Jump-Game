@@ -1,114 +1,117 @@
 document.addEventListener("DOMContentLoaded", () => {
   const grid = document.querySelector(".grid");
   const doodler = document.createElement("div");
+  let isGameOver = false;
+  let speed = 3;
+  let platformCount = 5;
+  let platforms = [];
+  let score = 0;
   let doodlerLeftSpace = 50;
   let startPoint = 150;
-  doodleBottomSpace = startPoint;
-  platFormCount = 5;
-  let isGameOver = false;
-  let platForms = [];
+  let doodlerBottomSpace = startPoint;
+  const gravity = 0.9;
   let upTimerId;
   let downTimerId;
   let isJumping = true;
-  isGoingLeft = false;
-  isGoingRight = false;
+  let isGoingLeft = false;
+  let isGoingRight = false;
   let leftTimerId;
-  function createDoodle() {
-    grid.append(doodler);
-    doodler.classList.add("doodler");
-    doodlerLeftSpace = platForms[0].left;
-    doodler.style.left = doodlerLeftSpace + `px`;
-    doodler.style.bottom = doodleBottomSpace + `px`;
-  }
+  let rightTimerId;
 
   class Platform {
     constructor(newPlatBottom) {
+      this.left = Math.random() * 315;
       this.bottom = newPlatBottom;
-      this.left = Math.random() * 350;
-
       this.visual = document.createElement("div");
+
       const visual = this.visual;
       visual.classList.add("platform");
-
       visual.style.left = this.left + "px";
       visual.style.bottom = this.bottom + "px";
       grid.appendChild(visual);
     }
   }
+
   function createPlatforms() {
-    for (let i = 0; i < platFormCount; i++) {
-      let platGap = 600 / platFormCount;
+    for (let i = 0; i < platformCount; i++) {
+      let platGap = 600 / platformCount;
       let newPlatBottom = 100 + i * platGap;
-      let newPlatForm = new Platform(newPlatBottom);
-      platForms.push(newPlatForm);
-      console.log(platForms);
+      let newPlatform = new Platform(newPlatBottom);
+      platforms.push(newPlatform);
+      console.log(platforms);
     }
   }
-  function movePlatForms() {
-    if (doodleBottomSpace > 200) {
-      platForms.forEach((platForm) => {
-        platForm.bottom -= 4;
-        let visual = platForm.visual;
-        visual.style.bottom = platForm.bottom + "px";
+
+  function movePlatforms() {
+    if (doodlerBottomSpace > 200) {
+      platforms.forEach((platform) => {
+        platform.bottom -= 4;
+        let visual = platform.visual;
+        visual.style.bottom = platform.bottom + "px";
+
+        if (platform.bottom < 10) {
+          let firstPlatform = platforms[0].visual;
+          firstPlatform.classList.remove("platform");
+          platforms.shift();
+          console.log(platforms);
+          score++;
+          var newPlatform = new Platform(600);
+          platforms.push(newPlatform);
+        }
       });
     }
   }
 
-  function jump() {
-    clearInterval(upTimerId);
-    isJumping = true;
-    upTimerId = setInterval(function () {
-      doodleBottomSpace += 20;
-      doodler.style.bottom = doodleBottomSpace + "px";
-      if (doodleBottomSpace > startPoint + 200) {
-        fall();
-      }
-    }, 30);
+  function createDoodler() {
+    grid.appendChild(doodler);
+    doodler.classList.add("doodler");
+    doodlerLeftSpace = platforms[0].left;
+    doodler.style.left = doodlerLeftSpace + "px";
+    doodler.style.bottom = doodlerBottomSpace + "px";
   }
 
   function fall() {
-    clearInterval(upTimerId);
     isJumping = false;
+    clearInterval(upTimerId);
     downTimerId = setInterval(function () {
-      doodleBottomSpace -= 5;
-      doodler.style.bottom = doodleBottomSpace + "px";
-      if (doodleBottomSpace <= 0) {
+      doodlerBottomSpace -= 5;
+      doodler.style.bottom = doodlerBottomSpace + "px";
+      if (doodlerBottomSpace <= 0) {
         gameOver();
-        platForms.forEach((platform) => {
-          if (
-            doodleBottomSpace >= platform.bottom &&
-            doodleBottomSpace <= platform.bottom + 15 &&
-            doodlerLeftSpace + 60 >= platform.left &&
-            doodlerLeftSpace <= platform.left + 85 &&
-            !isJumping
-          ) {
-            console.log("Landed");
-            startPoint = doodleBottomSpace;
-            console.log(startPoint);
-            console.log(doodleBottomSpace);
-            jump();
-          }
-        });
+      }
+      platforms.forEach((platform) => {
+        if (
+          doodlerBottomSpace >= platform.bottom &&
+          doodlerBottomSpace <= platform.bottom + 15 &&
+          doodlerLeftSpace + 60 >= platform.left &&
+          doodlerLeftSpace <= platform.left + 85 &&
+          !isJumping
+        ) {
+          console.log("tick");
+          startPoint = doodlerBottomSpace;
+          jump();
+          console.log("start", startPoint);
+          isJumping = true;
+        }
+      });
+    }, 20);
+  }
+
+  function jump() {
+    clearInterval(downTimerId);
+    isJumping = true;
+    upTimerId = setInterval(function () {
+      console.log(startPoint);
+      console.log("1", doodlerBottomSpace);
+      doodlerBottomSpace += 20;
+      doodler.style.bottom = doodlerBottomSpace + "px";
+      console.log("2", doodlerBottomSpace);
+      console.log("s", startPoint);
+      if (doodlerBottomSpace > startPoint + 200) {
+        fall();
+        isJumping = false;
       }
     }, 30);
-  }
-
-  function gameOver() {
-    console.log("Game Over 😥💥");
-    isGameOver = true;
-    clearInterval(upTimerId);
-    clearInterval(downTimerId);
-  }
-
-  function control(e) {
-    if (e.key == "ArrowLeft") {
-      // Move Left
-      moveLeft();
-    } else if (e.key == "ArrowRight") {
-      moveRight();
-    } else if (e.key == "ArrowUp") {
-      // moveStraight()
-    }
   }
 
   function moveLeft() {
@@ -119,12 +122,11 @@ document.addEventListener("DOMContentLoaded", () => {
     isGoingLeft = true;
     leftTimerId = setInterval(function () {
       if (doodlerLeftSpace >= 0) {
+        console.log("going left");
         doodlerLeftSpace -= 5;
         doodler.style.left = doodlerLeftSpace + "px";
-      } else {
-        moveRight();
-      }
-    }, 30);
+      } else moveRight();
+    }, 20);
   }
 
   function moveRight() {
@@ -134,23 +136,55 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     isGoingRight = true;
     rightTimerId = setInterval(function () {
-      if (doodlerLeftSpace <= 340) {
-        doodlerLeftSpace += 50;
+      //changed to 313 to fit doodle image
+      if (doodlerLeftSpace <= 313) {
+        console.log("going right");
+        doodlerLeftSpace += 5;
         doodler.style.left = doodlerLeftSpace + "px";
-      }
-    }, 30);
+      } else moveLeft();
+    }, 20);
+  }
+
+  function moveStraight() {
+    isGoingLeft = false;
+    isGoingRight = false;
+    clearInterval(leftTimerId);
+    clearInterval(rightTimerId);
+  }
+
+  //assign functions to keyCodes
+  function control(e) {
+    doodler.style.bottom = doodlerBottomSpace + "px";
+    if (e.key === "ArrowLeft") {
+      moveLeft();
+    } else if (e.key === "ArrowRight") {
+      moveRight();
+    } else if (e.key === "ArrowUp") {
+      moveStraight();
+    }
+  }
+
+  function gameOver() {
+    isGameOver = true;
+    while (grid.firstChild) {
+      console.log("remove");
+      grid.removeChild(grid.firstChild);
+    }
+    grid.innerHTML = score;
+    clearInterval(upTimerId);
+    clearInterval(downTimerId);
+    clearInterval(leftTimerId);
+    clearInterval(rightTimerId);
   }
 
   function start() {
     if (!isGameOver) {
       createPlatforms();
-      createDoodle();
-
-      setInterval(movePlatForms, 30);
-      jump();
+      createDoodler();
+      setInterval(movePlatforms, 30);
+      jump(startPoint);
       document.addEventListener("keyup", control);
     }
   }
-
   start();
 });
